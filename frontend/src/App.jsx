@@ -6,41 +6,90 @@ import Papa from 'papaparse';
 import './App.css';
 
 function App() {
-  // Authentication & Session
-  const [user, setUser] = useState(localStorage.getItem('tracker_user') || '');
-  const [loginInput, setLoginInput] = useState('');
+  // --- AUTHENTICATION STATE ---
+  const [token, setToken] = useState(localStorage.getItem('tracker_token') || null);
+  const [user, setUser] = useState(localStorage.getItem('tracker_username') || '');
+  const [isLoginMode, setIsLoginMode] = useState(true);
+  const [authUsername, setAuthUsername] = useState('');
+  const [authPassword, setAuthPassword] = useState('');
+  const [authError, setAuthError] = useState('');
 
-  // Expenses & Form State
+  // --- APP STATE ---
   const [expenses, setExpenses] = useState([]);
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState('Food');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [editingId, setEditingId] = useState(null);
-
-  // Budget State
   const [budget, setBudget] = useState(0);
   const [budgetInput, setBudgetInput] = useState('');
   const [isEditingBudget, setIsEditingBudget] = useState(false);
-
-  // Monthly Filtering State
-  const currentMonthStr = new Date().toISOString().slice(0, 7); // Format: YYYY-MM
+  const currentMonthStr = new Date().toISOString().slice(0, 7);
   const [selectedMonth, setSelectedMonth] = useState(currentMonthStr);
-
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#AF19FF', '#FF6666'];
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
-  // Automatically fetch data when a user is logged in
+  // --- API CONFIG ---
+  // Attach JWT Token to every request
+  const getHeaders = () => ({
+    headers: { Authorization: `Bearer ${token}` }
+  });
+
+  // Auto-fetch data if logged in
   useEffect(() => {
-    if (user) fetchData();
-  }, [user]);
+    if (token) fetchData();
+  }, [token]);
 
-  // Include user_id in the headers for all Backend requests
-  const getHeaders = () => ({ headers: { 'x-user-id': user } });
+  // Handle unauthorized errors (Token expired)
+  axios.interceptors.response.use(response => response, error => {
+    if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+      handleLogout();
+    }
+    return Promise.reject(error);
+  });
 
+  // --- AUTHENTICATION HANDLERS ---
+  const handleAuthSubmit = async (e) => {
+    e.preventDefault();
+    setAuthError('');
+    if (!authUsername.trim() || !authPassword.trim()) return setAuthError('Fields cannot be empty.');
+
+    const endpoint = isLoginMode ? '/api/auth/login' : '/api/auth/register';
+
+    try {
+      const response = await axios.post(`${API_URL}${endpoint}`, {
+        username: authUsername.trim(),
+        password: authPassword.trim()
+      });
+
+      if (isLoginMode) {
+        const { token, username } = response.data;
+        setToken(token);
+        setUser(username);
+        localStorage.setItem('tracker_token', token);
+        localStorage.setItem('tracker_username', username);
+      } else {
+        // Registration successful, switch to login
+        setIsLoginMode(true);
+        setAuthError('Registration successful! Please log in.');
+      }
+    } catch (error) {
+      setAuthError(error.response?.data?.error || 'An error occurred. Try again.');
+    }
+  };
+
+  const handleLogout = () => {
+    setToken(null);
+    setUser('');
+    setExpenses([]);
+    localStorage.removeItem('tracker_token');
+    localStorage.removeItem('tracker_username');
+  };
+
+  // --- DATA FETCHING & CRUD ---
   const fetchData = async () => {
     setLoading(true);
     setErrorMsg('');
@@ -60,45 +109,22 @@ function App() {
     }
   };
 
-  const handleLogin = (e) => {
-    e.preventDefault();
-    if (!loginInput.trim()) return;
-    setUser(loginInput.trim());
-    localStorage.setItem('tracker_user', loginInput.trim());
-  };
-
-  const handleLogout = () => {
-    setUser('');
-    setExpenses([]);
-    localStorage.removeItem('tracker_user');
-  };
-
-  // Add or Update Expense
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!description || !amount || !date) return alert('Please fill in all fields');
     setErrorMsg('');
 
     try {
+      const payload = { description, amount: parseFloat(amount), category, date };
       if (editingId) {
-        await axios.put(`${API_URL}/api/expenses/${editingId}`, {
-          description, amount: parseFloat(amount), category, date
-        }, getHeaders());
+        await axios.put(`${API_URL}/api/expenses/${editingId}`, payload, getHeaders());
         setEditingId(null);
       } else {
-        await axios.post(`${API_URL}/api/expenses`, {
-          description, amount: parseFloat(amount), category, date
-        }, getHeaders());
+        await axios.post(`${API_URL}/api/expenses`, payload, getHeaders());
       }
-
-      // Reset form
-      setDescription('');
-      setAmount('');
-      setCategory('Food');
-      setDate(new Date().toISOString().split('T')[0]);
+      setDescription(''); setAmount(''); setCategory('Food'); setDate(new Date().toISOString().split('T')[0]);
       fetchData(); 
     } catch (error) {
-      console.error('Error saving expense:', error);
       setErrorMsg('Failed to save expense.');
     }
   };
@@ -109,12 +135,10 @@ function App() {
       await axios.delete(`${API_URL}/api/expenses/${id}`, getHeaders());
       fetchData();
     } catch (error) {
-      console.error('Error deleting expense:', error);
       setErrorMsg('Failed to delete expense.');
     }
   };
 
-  // Prepare Edit State
   const startEdit = (exp) => {
     setEditingId(exp.id);
     setDescription(exp.description);
@@ -124,15 +148,6 @@ function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const cancelEdit = () => {
-    setEditingId(null);
-    setDescription('');
-    setAmount('');
-    setCategory('Food');
-    setDate(new Date().toISOString().split('T')[0]);
-  };
-
-  // Budget Update
   const updateBudget = async () => {
     if (budgetInput === '' || Number(budgetInput) < 0) return alert('Enter a valid budget');
     try {
@@ -140,20 +155,13 @@ function App() {
       setBudget(Number(budgetInput));
       setIsEditingBudget(false);
     } catch (error) {
-      console.error('Error updating budget:', error);
       setErrorMsg('Failed to update budget.');
     }
   };
 
-  // --------------------------------------------------------
-  // FINANCIAL CALCULATIONS (Filtered by Selected Month)
-  // --------------------------------------------------------
-  
+  // --- CALCULATIONS & EXPORTS ---
   const filteredExpenses = useMemo(() => {
-    return expenses.filter(exp => {
-      const expMonth = new Date(exp.date).toISOString().slice(0, 7);
-      return expMonth === selectedMonth;
-    });
+    return expenses.filter(exp => new Date(exp.date).toISOString().slice(0, 7) === selectedMonth);
   }, [expenses, selectedMonth]);
 
   const totalSpent = filteredExpenses.reduce((acc, curr) => acc + Number(curr.amount), 0);
@@ -162,63 +170,60 @@ function App() {
 
   const getChartData = () => {
     const dataMap = {};
-    filteredExpenses.forEach(exp => {
-      dataMap[exp.category] = (dataMap[exp.category] || 0) + Number(exp.amount);
-    });
+    filteredExpenses.forEach(exp => { dataMap[exp.category] = (dataMap[exp.category] || 0) + Number(exp.amount); });
     return Object.keys(dataMap).map(key => ({ name: key, value: dataMap[key] }));
   };
 
-  // Exporters
-  const exportCSV = () => {
-    if (filteredExpenses.length === 0) return alert('No data to export for this month!');
-    const csv = Papa.unparse(filteredExpenses);
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `expenses_${selectedMonth}.csv`;
-    a.click();
-  };
-
-  const exportPDF = () => {
-    if (filteredExpenses.length === 0) return alert('No data to export for this month!');
-    const doc = new jsPDF();
-    doc.text(`Expense Report - ${selectedMonth}`, 10, 10);
-    
-    let y = 20;
-    filteredExpenses.forEach((exp) => {
-      if (y > 280) {
-        doc.addPage();
-        y = 20; 
-      }
-      doc.text(`${new Date(exp.date).toLocaleDateString()} - ${exp.description} - $${Number(exp.amount).toFixed(2)} (${exp.category})`, 10, y);
-      y += 10;
-    });
-    doc.text(`Total Spent: $${totalSpent.toFixed(2)}`, 10, y + 10);
-    doc.save(`expenses_${selectedMonth}.pdf`);
-  };
-
   // --------------------------------------------------------
-  // RENDER LOGIN SCREEN (If no user is selected)
+  // RENDER AUTHENTICATION PAGE
   // --------------------------------------------------------
-  if (!user) {
+  if (!token) {
     return (
-      <div style={{ padding: '50px 20px', textAlign: 'center', fontFamily: 'Arial, sans-serif', maxWidth: '400px', margin: 'auto' }}>
-        <h2>Welcome to Smart Budget</h2>
-        <p style={{ color: '#666', marginBottom: '20px' }}>Log in to manage your personal finances.</p>
-        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-          <input 
-            type="text" 
-            placeholder="Enter a Username" 
-            value={loginInput} 
-            onChange={(e) => setLoginInput(e.target.value)} 
-            required 
-            style={{ padding: '10px', fontSize: '16px', borderRadius: '5px', border: '1px solid #ccc' }}
-          />
-          <button type="submit" style={{ padding: '10px', background: '#0088FE', color: 'white', border: 'none', cursor: 'pointer', borderRadius: '5px', fontSize: '16px', fontWeight: 'bold' }}>
-            Continue to Dashboard
-          </button>
-        </form>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', background: '#f0f2f5', fontFamily: 'Arial, sans-serif' }}>
+        <div style={{ background: 'white', padding: '40px', borderRadius: '10px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', width: '100%', maxWidth: '400px', textAlign: 'center' }}>
+          <h2 style={{ color: '#333', marginBottom: '10px' }}>Smart Budget</h2>
+          <p style={{ color: '#666', marginBottom: '25px' }}>
+            {isLoginMode ? 'Welcome back! Please login.' : 'Create a new account.'}
+          </p>
+
+          {authError && (
+            <div style={{ background: authError.includes('successful') ? '#d4edda' : '#f8d7da', color: authError.includes('successful') ? '#155724' : '#721c24', padding: '10px', borderRadius: '5px', marginBottom: '15px', fontSize: '14px' }}>
+              {authError}
+            </div>
+          )}
+
+          <form onSubmit={handleAuthSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+            <input 
+              type="text" 
+              placeholder="Username" 
+              value={authUsername} 
+              onChange={(e) => setAuthUsername(e.target.value)} 
+              required 
+              style={{ padding: '12px', fontSize: '15px', borderRadius: '5px', border: '1px solid #ccc', outline: 'none' }}
+            />
+            <input 
+              type="password" 
+              placeholder="Password" 
+              value={authPassword} 
+              onChange={(e) => setAuthPassword(e.target.value)} 
+              required 
+              style={{ padding: '12px', fontSize: '15px', borderRadius: '5px', border: '1px solid #ccc', outline: 'none' }}
+            />
+            <button type="submit" style={{ padding: '12px', background: '#0088FE', color: 'white', border: 'none', cursor: 'pointer', borderRadius: '5px', fontSize: '16px', fontWeight: 'bold', marginTop: '10px' }}>
+              {isLoginMode ? 'Login' : 'Sign Up'}
+            </button>
+          </form>
+
+          <p style={{ marginTop: '20px', fontSize: '14px', color: '#555' }}>
+            {isLoginMode ? "Don't have an account? " : "Already have an account? "}
+            <span 
+              onClick={() => { setIsLoginMode(!isLoginMode); setAuthError(''); }} 
+              style={{ color: '#0088FE', cursor: 'pointer', fontWeight: 'bold' }}
+            >
+              {isLoginMode ? 'Sign Up' : 'Login'}
+            </span>
+          </p>
+        </div>
       </div>
     );
   }
@@ -315,7 +320,7 @@ function App() {
               {editingId ? 'Update Expense' : 'Save Expense'}
             </button>
             {editingId && (
-              <button type="button" onClick={cancelEdit} style={{ flex: 1, padding: '10px', background: 'gray', color: 'white', border: 'none', cursor: 'pointer', borderRadius: '5px' }}>
+              <button type="button" onClick={() => { setEditingId(null); setDescription(''); setAmount(''); setCategory('Food'); setDate(new Date().toISOString().split('T')[0]); }} style={{ flex: 1, padding: '10px', background: 'gray', color: 'white', border: 'none', cursor: 'pointer', borderRadius: '5px' }}>
                 Cancel
               </button>
             )}
@@ -342,15 +347,7 @@ function App() {
         </div>
       </div>
 
-      {/* EXPORTS & TABLE */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px', flexWrap: 'wrap', gap: '10px' }}>
-        <h3 style={{ margin: 0 }}>Logged Expenses ({selectedMonth})</h3>
-        <div>
-            <button onClick={exportCSV} style={{ marginRight: '10px', padding: '6px 12px', cursor: 'pointer', borderRadius: '4px', border: '1px solid #ccc', background: '#fff' }}>Export CSV</button>
-            <button onClick={exportPDF} style={{ padding: '6px 12px', cursor: 'pointer', borderRadius: '4px', border: '1px solid #ccc', background: '#fff' }}>Export PDF</button>
-        </div>
-      </div>
-      
+      {/* TABLE */}
       {loading ? (
         <p>Loading data...</p>
       ) : (
@@ -378,16 +375,8 @@ function App() {
                     <td style={{ padding: '12px 8px' }}>{exp.category}</td>
                     <td style={{ padding: '12px 8px', fontWeight: 'bold' }}>${Number(exp.amount).toFixed(2)}</td>
                     <td style={{ padding: '12px 8px', display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                      <button 
-                        onClick={() => startEdit(exp)} 
-                        style={{ background: '#ffc107', color: 'black', border: 'none', padding: '6px 12px', cursor: 'pointer', borderRadius: '4px' }}>
-                        Edit
-                      </button>
-                      <button 
-                        onClick={() => deleteExpense(exp.id)} 
-                        style={{ background: '#dc3545', color: 'white', border: 'none', padding: '6px 12px', cursor: 'pointer', borderRadius: '4px' }}>
-                        Delete
-                      </button>
+                      <button onClick={() => startEdit(exp)} style={{ background: '#ffc107', color: 'black', border: 'none', padding: '6px 12px', cursor: 'pointer', borderRadius: '4px' }}>Edit</button>
+                      <button onClick={() => deleteExpense(exp.id)} style={{ background: '#dc3545', color: 'white', border: 'none', padding: '6px 12px', cursor: 'pointer', borderRadius: '4px' }}>Delete</button>
                     </td>
                   </tr>
                 ))
