@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import projectLogo from './images/ProjectLogo.jpg';
 import './App.css';
 
 function App() {
@@ -11,7 +12,7 @@ function App() {
   const [authUsername, setAuthUsername] = useState('');
   const [authPassword, setAuthPassword] = useState('');
   const [authError, setAuthError] = useState('');
-  const [showPassword, setShowPassword] = useState(false); // New state for password toggle
+  const [showPassword, setShowPassword] = useState(false);
 
   // --- APP STATE ---
   const [expenses, setExpenses] = useState([]);
@@ -85,9 +86,9 @@ function App() {
     setToken(null);
     setUser('');
     setExpenses([]);
-    setAuthUsername(''); // Fully clear username
-    setAuthPassword(''); // Fully clear password
-    setShowPassword(false); // Reset password visibility toggle
+    setAuthUsername(''); 
+    setAuthPassword(''); 
+    setShowPassword(false); 
     localStorage.removeItem('tracker_token');
     localStorage.removeItem('tracker_username');
   };
@@ -177,7 +178,6 @@ function App() {
     return Object.keys(dataMap).map(key => ({ name: key, value: dataMap[key] }));
   };
 
-  // Helper to format currency beautifully
   const formatRupees = (val) => {
     return `₹${Number(val).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
@@ -189,7 +189,9 @@ function App() {
     return (
       <div className="auth-container">
         <div className="auth-card">
-          <div className="auth-icon">💸</div>
+          <div className="auth-icon">
+            <img src={projectLogo} alt="Project Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          </div>
           <h2 className="auth-title">Smart Budget</h2>
           <p className="auth-subtitle">
             {isLoginMode ? 'Welcome back! Please login to your account.' : 'Create a new account to get started.'}
@@ -247,8 +249,8 @@ function App() {
                 setIsLoginMode(!isLoginMode); 
                 setAuthError(''); 
                 setAuthPassword(''); 
-                setAuthUsername(''); // Clear username on switch
-                setShowPassword(false); // Reset visibility toggle on switch
+                setAuthUsername(''); 
+                setShowPassword(false); 
               }}>
               {isLoginMode ? 'Sign Up' : 'Log In'}
             </span>
@@ -266,7 +268,8 @@ function App() {
       {/* HEADER */}
       <header className="top-nav">
         <div className="nav-brand">
-          <span style={{ fontSize: '26px' }}>💸</span> SmartTracker
+          <img src={projectLogo} alt="Logo" style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }} /> 
+          SmartTracker
         </div>
         <div className="user-profile">
           <span style={{ fontWeight: '600', color: 'var(--text-muted)' }}>Hi, {user} 👋</span>
@@ -278,7 +281,6 @@ function App() {
         {errorMsg && <div className="alert alert-error">{errorMsg}</div>}
 
         <div className="controls-bar">
-          {/* Explicitly defined text color to prevent blending into background */}
           <h2 style={{ margin: 0, fontSize: '28px', fontWeight: '800', letterSpacing: '-0.5px', color: 'var(--text-main)' }}>
             Overview
           </h2>
@@ -323,7 +325,7 @@ function App() {
             <h2 className="stat-value warning">{formatRupees(totalSpent)}</h2>
           </div>
 
-          <div className="stat-card" style={{ background: remainingBudget < 0 ? 'var(--danger-bg)' : 'var(--card-bg)' }}>
+          <div className="stat-card" style={{ background: remainingBudget < 0 ? 'var(--glass-danger-bg)' : 'var(--glass-bg)' }}>
             <div className="stat-header" style={{ color: remainingBudget < 0 ? 'var(--danger)' : 'var(--text-muted)' }}>Remaining Balance</div>
             <h2 className={`stat-value ${remainingBudget < 0 ? 'danger' : 'success'}`}>
               {formatRupees(remainingBudget)}
