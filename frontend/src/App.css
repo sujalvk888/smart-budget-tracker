@@ -26,6 +26,14 @@
   --shadow-hover: 0 20px 25px -5px rgba(101, 163, 13, 0.15), 0 10px 10px -5px rgba(101, 163, 13, 0.05);
 }
 
+/* Fix default Vite/React root width constraints to prevent white borders on the sides */
+#root {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
 body {
   margin: 0;
   font-family: 'Inter', sans-serif;
@@ -37,6 +45,8 @@ body {
 /* ================== AUTHENTICATION PAGE ================== */
 .auth-container {
   min-height: 100vh;
+  width: 100%;
+  box-sizing: border-box;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -136,6 +146,34 @@ body {
   border-color: var(--primary);
   box-shadow: 0 0 0 4px rgba(101, 163, 13, 0.15);
   outline: none;
+}
+
+/* Password Input Wrapper styles to position the toggle button */
+.password-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-input-wrapper .modern-input {
+  padding-right: 60px; /* Space for the show/hide button */
+}
+
+.password-toggle-btn {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px;
+  font-family: 'Inter', sans-serif;
+}
+
+.password-toggle-btn:hover {
+  color: var(--primary);
 }
 
 .primary-btn {
@@ -241,8 +279,7 @@ body {
 
 .main-content {
   padding: 40px;
-  max-width: 1400px;
-  margin: 0 auto;
+  /* Removed max-width constraint to let it stretch the full screen */
   width: 100%;
   box-sizing: border-box;
 }

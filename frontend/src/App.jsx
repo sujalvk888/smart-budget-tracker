@@ -11,6 +11,7 @@ function App() {
   const [authUsername, setAuthUsername] = useState('');
   const [authPassword, setAuthPassword] = useState('');
   const [authError, setAuthError] = useState('');
+  const [showPassword, setShowPassword] = useState(false); // New state for password toggle
 
   // --- APP STATE ---
   const [expenses, setExpenses] = useState([]);
@@ -84,6 +85,9 @@ function App() {
     setToken(null);
     setUser('');
     setExpenses([]);
+    setAuthUsername(''); // Fully clear username
+    setAuthPassword(''); // Fully clear password
+    setShowPassword(false); // Reset password visibility toggle
     localStorage.removeItem('tracker_token');
     localStorage.removeItem('tracker_username');
   };
@@ -212,14 +216,24 @@ function App() {
             
             <div className="form-group">
               <label className="form-label">Password</label>
-              <input 
-                type="password" 
-                className="modern-input"
-                placeholder="Enter your password" 
-                value={authPassword} 
-                onChange={(e) => setAuthPassword(e.target.value)} 
-                required 
-              />
+              <div className="password-input-wrapper">
+                <input 
+                  type={showPassword ? "text" : "password"} 
+                  className="modern-input"
+                  placeholder="Enter your password" 
+                  value={authPassword} 
+                  onChange={(e) => setAuthPassword(e.target.value)} 
+                  required 
+                />
+                <button 
+                  type="button" 
+                  className="password-toggle-btn"
+                  onClick={() => setShowPassword(!showPassword)}
+                  tabIndex="-1"
+                >
+                  {showPassword ? "Hide" : "Show"}
+                </button>
+              </div>
             </div>
 
             <button type="submit" className="primary-btn" disabled={loading}>
@@ -229,7 +243,13 @@ function App() {
 
           <p className="auth-switch">
             {isLoginMode ? "Don't have an account? " : "Already have an account? "}
-            <span onClick={() => { setIsLoginMode(!isLoginMode); setAuthError(''); setAuthPassword(''); }}>
+            <span onClick={() => { 
+                setIsLoginMode(!isLoginMode); 
+                setAuthError(''); 
+                setAuthPassword(''); 
+                setAuthUsername(''); // Clear username on switch
+                setShowPassword(false); // Reset visibility toggle on switch
+              }}>
               {isLoginMode ? 'Sign Up' : 'Log In'}
             </span>
           </p>
@@ -258,7 +278,10 @@ function App() {
         {errorMsg && <div className="alert alert-error">{errorMsg}</div>}
 
         <div className="controls-bar">
-          <h2 style={{ margin: 0, fontSize: '28px', fontWeight: '800', letterSpacing: '-0.5px' }}>Overview</h2>
+          {/* Explicitly defined text color to prevent blending into background */}
+          <h2 style={{ margin: 0, fontSize: '28px', fontWeight: '800', letterSpacing: '-0.5px', color: 'var(--text-main)' }}>
+            Overview
+          </h2>
           <div className="month-selector">
             <label>Timeline:</label>
             <input 
