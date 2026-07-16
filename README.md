@@ -379,22 +379,13 @@ Recommended screenshots to include:
 
 ---
 
-## 🎥 Demo GIFs
+## 🎬 Live Demo
 
-> **Demo recordings will be added soon.**
-
-Suggested GIFs:
-
-- User Registration
-- User Login
-- Setting Monthly Budget
-- Adding an Expense
-- Editing an Expense
-- Deleting an Expense
-- Switching Between Months
-- Pie Chart Updates
-- Budget Progress Changes
-- Responsive Dashboard Walkthrough
+<p align="center">
+  <img src="./assets/gifs/demo.gif"
+       alt="Smart Budget Tracker demonstrating expense management, monthly budgeting, interactive financial analytics, and real-time spending insights."
+       width="100%">
+</p>
 
 ---
 
