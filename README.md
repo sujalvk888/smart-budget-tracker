@@ -358,6 +358,14 @@ smart-budget-tracker/
     └── index.html
 ```
 
+## 🎬 Live Demo
+
+<p align="center">
+  <img src="./assets/gifs/demo.gif"
+       alt="Smart Budget Tracker demonstrating expense management, monthly budgeting, interactive financial analytics, and real-time spending insights."
+       width="100%">
+</p>
+
 ---
 
 ## 📸 Screenshots
@@ -419,16 +427,6 @@ smart-budget-tracker/
 </td>
 </tr>
 </table>
-
----
-
-## 🎬 Live Demo
-
-<p align="center">
-  <img src="./assets/gifs/demo.gif"
-       alt="Smart Budget Tracker demonstrating expense management, monthly budgeting, interactive financial analytics, and real-time spending insights."
-       width="100%">
-</p>
 
 ---
 
