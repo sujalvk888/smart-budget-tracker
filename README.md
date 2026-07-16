@@ -360,22 +360,65 @@ smart-budget-tracker/
 
 ---
 
-# 📸 Screenshots
+## 📸 Screenshots
 
-> **Screenshots will be added soon.**
+<table align="center">
+<tr>
+<td width="50%">
 
-Recommended screenshots to include:
+### 🔐 Login
 
-- 🔐 Login Page
-- 📝 Registration Page
-- 📊 Dashboard Overview
-- 💰 Budget Summary Cards
-- 📈 Expense Analytics
-- 🥧 Pie Chart Visualization
-- ➕ Add Expense Form
-- ✏️ Edit Expense Workflow
-- 📋 Expense Table
-- 📱 Mobile Responsive View
+<img src="./assets/screenshots/login.png"
+     alt="Smart Budget Tracker login page"
+     width="100%"/>
+
+</td>
+
+<td width="50%">
+
+### 📝 Register
+
+<img src="./assets/screenshots/register.png"
+     alt="Smart Budget Tracker registration page"
+     width="100%"/>
+
+</td>
+</tr>
+
+<tr>
+<td width="50%">
+
+### 📊 Budget Dashboard
+
+<img src="./assets/screenshots/dashboard-overview.png"
+     alt="Smart Budget Tracker dashboard overview"
+     width="100%"/>
+
+</td>
+
+<td width="50%">
+
+### ⚠️ Budget Warning
+
+<img src="./assets/screenshots/dashboard-budget-warning.png"
+     alt="Budget dashboard showing high budget utilization"
+     width="100%"/>
+
+</td>
+</tr>
+
+<tr>
+<td colspan="2">
+
+### 🚨 Budget Exceeded
+
+<img src="./assets/screenshots/dashboard-budget-exceeded.png"
+     alt="Budget dashboard showing overspending and negative balance"
+     width="100%"/>
+
+</td>
+</tr>
+</table>
 
 ---
 
